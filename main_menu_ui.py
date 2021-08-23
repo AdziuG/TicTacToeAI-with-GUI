@@ -9,6 +9,7 @@
 
 
 from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QButtonGroup
 
 
@@ -25,6 +26,10 @@ class Ui_Dialog(object):
         self.app_title = QtWidgets.QLabel(self.verticalLayoutWidget)
         self.app_title.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
         self.app_title.setObjectName("app_title")
+        self.font = QFont()
+        self.font.setPointSize(12)
+        self.font.setBold(True)
+        self.app_title.setFont(self.font)
         self.main_menu_ly.addWidget(self.app_title)
         self.menu_upper = QtWidgets.QGridLayout()
         self.menu_upper.setObjectName("menu_upper")
@@ -47,6 +52,7 @@ class Ui_Dialog(object):
         self.player1_name = QtWidgets.QLineEdit(self.verticalLayoutWidget)
         self.player1_name.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
         self.player1_name.setObjectName("player1_name")
+        self.player1_name.setMaxLength(15)
         self.menu_upper.addWidget(self.player1_name, 0, 3, 1, 1)
         self.opponent_choice_label = QtWidgets.QLabel(self.verticalLayoutWidget)
         self.opponent_choice_label.setLineWidth(0)
@@ -74,6 +80,7 @@ class Ui_Dialog(object):
         self.player2_name.setText("")
         self.player2_name.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
         self.player2_name.setObjectName("player2_name")
+        self.player2_name.setMaxLength(15)
         self.player2_name.setEnabled(False)
         self.menu_lower.addWidget(self.player2_name, 0, 1, 1, 1)
         self.player2_label = QtWidgets.QLabel(self.verticalLayoutWidget)
