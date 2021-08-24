@@ -72,6 +72,8 @@ class Board(QDialog, Ui_tic_tac_toe_board):
                 self.board[i][j].clicked.connect(self.current_turn_label_changer)  # 6
                 self.ttt_board.addWidget(self.board[i][j], i, j)  # 7
 
+    # SLOT FUNCTIONS
+
     def exit_board(self):
         """
         Method stops timer and close second window (board of the game) and return to main menu of app.
@@ -105,6 +107,30 @@ class Board(QDialog, Ui_tic_tac_toe_board):
         button.capture(player.shape)
         self.push_list[row][col] = player.shape  # Replace empty cell by shape of current player.
         self.control_state(player, row, col)
+
+    def new_game_btn_clicked(self):
+        """This method is connected with new_game_btn. When button is clicked then this method is called."""
+        # Try/except is used to catch AttributeError when instance's not created yet.
+        try:
+            self.timer.stop()  # Instance of class QTimer() is stopped.
+        except AttributeError:
+            pass
+        self.move_countdown.display(0)  # sets countdown lcd timer on value = 0
+        self.player1.shape, self.player2.shape = self.player2.shape, self.player1.shape  # Replace shapes for next round.
+        self._init_board(self.size, (self.player1, self.player2))  # Initialize board of the game but we keep the same settings.
+        self.current_turn_label_changer()  # Sets label which display who should make a move.
+
+    def reset_game(self):
+        """
+        Method stops countdown timer, and setting it on value 0.
+        After that disables all button on the board
+        """
+        self.timer.stop()
+        self.move_countdown.display(0)
+        for btn in self.btn_grp_board.buttons():
+            btn.setEnabled(False)
+
+    # MANAGES TIMER
 
     def create_timer(self):
         """
@@ -143,6 +169,13 @@ class Board(QDialog, Ui_tic_tac_toe_board):
         self.update_lcd()
         self.reset_game()
 
+    # UPDATE LABEL IN GUI
+
+    def update_lcd(self):
+        """ Update lcd counter (displaying in GUI) after every round. If player wins then this number increase """
+        self.player1_wins_counter.display(self.player1.counter_wins)
+        self.player2_wins_counter.display(self.player2.counter_wins)
+
     def current_turn_label_changer(self):
         """
         It's slot function connected with button on the board game.
@@ -166,6 +199,8 @@ class Board(QDialog, Ui_tic_tac_toe_board):
                 self.current_turn_changed.setText(self.player2.name)
             else:
                 self.current_turn_changed.setText(self.player1.name)
+
+    # CONTROL STATE OF THE BOARD AND GAME STATUS
 
     def current_turn(self, previous_player):
         """
@@ -194,34 +229,73 @@ class Board(QDialog, Ui_tic_tac_toe_board):
             elif self.previous_player.shape == self.player2.shape:
                 return self.player1
 
-    def new_game_btn_clicked(self):
-        """This method is connected with new_game_btn. When button is clicked then this method is called."""
-        # Try/except is used to catch AttributeError when instance's not created yet.
-        try:
-            self.timer.stop()  # Instance of class QTimer() is stopped.
-        except AttributeError:
-            pass
-        self.move_countdown.display(0)  # sets countdown lcd timer on value = 0
-        self.player1.shape, self.player2.shape = self.player2.shape, self.player1.shape  # Replace shapes for next round.
-        self._init_board(self.size, (self.player1, self.player2))  # Initialize board of the game but we keep the same settings.
-        self.current_turn_label_changer()  # Sets label which display who should make a move.
-
-    def reset_game(self):
+    def control_state(self, player, row, column):
         """
-        Method stops countdown timer, and setting it on value 0.
-        After that disables all button on the board
+        This method is responsible for control state of the board of the game. If is_win and is_draw are False then
+        remove selected row and column from empty cells list. After that we call method for next turn(move).
+        :param player:  player whose made already movement.
+        :param row: chosen row (by player)
+        :param column: chosen row (by player)
         """
-        self.timer.stop()
-        self.move_countdown.display(0)
-        for btn in self.btn_grp_board.buttons():
-            btn.setEnabled(False)
+        # Check that after movement(on the board game) is the end of the game.
+        if self.is_win():  # If sb wins:
+            self.reset_game()  # Call method responsible for clear board of the game
+            QMessageBox.information(self, "Game status", f"{player.name} WIN!")  # Display popup with results.
+            player.counter_wins += 1  # add win to counter_wins attribution in player instance.
+            self.update_lcd()  # update gui information about number of winners.
+            return
+        if self.is_draw():
+            self.reset_game()  # Call method responsibilities for clear board of the game.
+            QMessageBox.information(self, "Game status", "DRAW!")  # Display popup with info about draw.
+            return
+        self.possible_moves.remove((row, column))  # Remove (row, column) from list of empty cells in the board.
+        self.current_turn(player)  # Call method responsible for control what player will make another move.
 
-    def update_lcd(self):
-        """ Update lcd counter (displaying in GUI) after every round. If player wins then this number increase """
-        self.player1_wins_counter.display(self.player1.counter_wins)
-        self.player2_wins_counter.display(self.player2.counter_wins)
+    def is_win(self):
+        """
+        Transposition to check rows, then columns and return True or False. If return True then finish game.
+        Push_list was created for control game logic and current events. It's a copy of current situation in GUI board.
+        """
+        for new_board in [self.push_list, np.transpose(self.push_list)]:
+            result = self.check_rows(new_board)
+            if result:
+                return result
+        # Check diagonals and return True or False
+        return self.check_diagonals()
 
-    # AI CONTROL MOVEMENTS AND LOGIC
+    def check_rows(self, board):
+        # Iterates through board and if
+        for row in board:
+            # Check if exists only one shape(X or O) in row and symbol can't be "-".
+            # Symbol "-" represents empty cell in the board of the game.
+            if len(set(row)) == 1 and set(row) != {"-"}:
+                return True
+        return False
+
+    def check_diagonals(self):
+        # Check diagonal ((0,0), (1,1), (2,2)....etc)
+        check_one = set([self.push_list[i][i] for i in range(len(self.push_list))])
+        # Check if exists only one shape(X or O) in first diagonal and symbol there can't be "-".
+        # Symbol "-" represents empty cell in the board of the game.
+        if len(check_one) == 1 and check_one != {"-"}:
+            return True
+        # check diagonal (from last column in first row to last row and first column)
+        check_two = set([self.push_list[i][len(self.push_list) - i - 1] for i in range(len(self.push_list))])
+        # Check if exists only one shape(X or O) in second diagonal and symbol there can't be "-".
+        # Symbol "-" represents empty cell in the board of the game.
+        if len(check_two) == 1 and check_two != {"-"}:
+            return True
+        return False
+
+    def is_draw(self):
+        """Checks existing empty cells. If not, then return True and finish game."""
+        for row in range(len(self.push_list)):
+            for column in range(len(self.push_list[row])):
+                if self.push_list[row][column] == "-":
+                    return False
+        return True
+
+    # AI - CONTROL MOVEMENTS AND LOGIC
 
     def ai_move(self):
         """
@@ -294,75 +368,6 @@ class Board(QDialog, Ui_tic_tac_toe_board):
         self.board[row][column].capture(self.player2.shape)  # Responsible for display move on the GUI board
         self.control_state(self.player2, row, column)  # Responsible for control state of the board.
         return
-
-    def control_state(self, player, row, column):
-        """
-        This method is responsible for control state of the board of the game. If is_win and is_draw are False then
-        remove selected row and column from empty cells list. After that we call method for next turn(move).
-        :param player:  player whose made already movement.
-        :param row: chosen row (by player)
-        :param column: chosen row (by player)
-        """
-        print(self.possible_moves)
-        # Check that after movement(on the board game) is the end of the game.
-        if self.is_win():  # If sb wins:
-            self.reset_game()  # Call method responsible for clear board of the game
-            QMessageBox.information(self, "Game status", f"{player.name} WIN!")  # Display popup with results.
-            player.counter_wins += 1  # add win to counter_wins attribution in player instance.
-            self.update_lcd()  # update gui information about number of winners.
-            return
-        if self.is_draw():
-            self.reset_game()  # Call method responsibilities for clear board of the game.
-            QMessageBox.information(self, "Game status", "DRAW!")  # Display popup with info about draw.
-            return
-        self.possible_moves.remove((row, column))  # Remove (row, column) from list of empty cells in the board.
-        self.current_turn(player)  # Call method responsible for control what player will make another move.
-
-    def is_draw(self):
-        """Checks existing empty cells. If not, then return True and finish game."""
-        for row in range(len(self.push_list)):
-            for column in range(len(self.push_list[row])):
-                if self.push_list[row][column] == "-":
-                    return False
-        return True
-
-    def is_win(self):
-        """
-        Transposition to check rows, then columns and return True or False. If return True then finish game.
-        Push_list was created for control game logic and current events. It's a copy of current situation in GUI board.
-        """
-        for new_board in [self.push_list, np.transpose(self.push_list)]:
-            result = self.check_rows(new_board)
-            if result:
-                return result
-        # Check diagonals and return True or False
-        return self.check_diagonals()
-
-    def check_rows(self, board):
-        # Iterates through board and if
-        for row in board:
-            # Check if exists only one shape(X or O) in row and symbol can't be "-".
-            # Symbol "-" represents empty cell in the board of the game.
-            if len(set(row)) == 1 and set(row) != {"-"}:
-                return True
-        return False
-
-    def check_diagonals(self):
-        # Check diagonal ((0,0), (1,1), (2,2)....etc)
-        check_one = set([self.push_list[i][i] for i in range(len(self.push_list))])
-        print(f"check_one: {check_one}")
-        # Check if exists only one shape(X or O) in first diagonal and symbol there can't be "-".
-        # Symbol "-" represents empty cell in the board of the game.
-        if len(check_one) == 1 and check_one != {"-"}:
-            return True
-        # check diagonal (from last column in first row to last row and first column)
-        check_two = set([self.push_list[i][len(self.push_list) - i - 1] for i in range(len(self.push_list))])
-        print(f"check_two: {check_two}")
-        # Check if exists only one shape(X or O) in second diagonal and symbol there can't be "-".
-        # Symbol "-" represents empty cell in the board of the game.
-        if len(check_two) == 1 and check_two != {"-"}:
-            return True
-        return False
 
 
 class TicTacToeCell(QPushButton):

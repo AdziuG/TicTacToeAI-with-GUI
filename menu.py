@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QDialog
 from board_logic import Board
 from board_ui import Ui_tic_tac_toe_board
 from main_menu_ui import Ui_Dialog
+import dark_orange
 
 
 class DlgMain(QDialog, Ui_Dialog, Ui_tic_tac_toe_board):
