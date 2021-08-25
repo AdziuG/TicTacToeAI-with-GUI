@@ -24,9 +24,15 @@ FEATURES:
 
 # SCREENSHOTS
 
+![main menu](https://user-images.githubusercontent.com/63744978/130773383-12520f2e-ddc1-41dd-91a6-182cafe1b81d.png)
+![board](https://user-images.githubusercontent.com/63744978/130773405-d9ad0e74-21fd-4259-a1dc-b23615cc3f06.png)
 
 
-   
+# VIDEO
+https://user-images.githubusercontent.com/63744978/130774433-e3f8d9ed-8dd0-4a6d-a4e5-2b6f91a00e16.mov
+
+
+
 
 # CONFIGURATION:
   If you are using Linux please install pyqt5 using terminal:
