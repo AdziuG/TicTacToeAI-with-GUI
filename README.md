@@ -31,13 +31,13 @@ FEATURES:
 # VIDEO
 https://user-images.githubusercontent.com/63744978/130774433-e3f8d9ed-8dd0-4a6d-a4e5-2b6f91a00e16.mov
 
-
-
-
 # CONFIGURATION:
   If you are using Linux please install pyqt5 using terminal:
+  
     sudo apt-get install python3-pyqt5
+    
     sudo apt-get install qttools5-dev-tools
+    
   For other platforms, use the website. You can download PyQt5 from their official page.
   
 # INSTALL:
