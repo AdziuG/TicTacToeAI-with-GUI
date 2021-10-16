@@ -96,7 +96,7 @@ class Ui_Dialog(object):
         self.easy_level.setObjectName("easy_level")
         self.group_btns_levels.addButton(self.easy_level)
         self.intermediate_level = QtWidgets.QRadioButton(self.ai_difficulty_gbtns)
-        self.intermediate_level.setGeometry(QtCore.QRect(10, 70, 89, 20))
+        self.intermediate_level.setGeometry(QtCore.QRect(10, 70, 100, 20))
         self.intermediate_level.setChecked(True)
         self.intermediate_level.setObjectName("intermediate_level")
         self.group_btns_levels.addButton(self.intermediate_level)
