@@ -1,10 +1,14 @@
 import functools
+import math
 import random
 import numpy as np
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QDialog, QButtonGroup, QMessageBox, QPushButton
+
+import minimax_logic
 from board_ui import Ui_tic_tac_toe_board
+from minimax_logic import *
 
 
 class Board(QDialog, Ui_tic_tac_toe_board):
@@ -251,7 +255,7 @@ class Board(QDialog, Ui_tic_tac_toe_board):
         self.possible_moves.remove((row, column))  # Remove (row, column) from list of empty cells in the board.
         self.current_turn(player)  # Call method responsible for control what player will make another move.
 
-    def is_win(self):
+    def is_win(self, *optional):
         """
         Transposition to check rows, then columns and return True or False. If return True then finish game.
         Push_list was created for control game logic and current events. It's a copy of current situation in GUI board.
@@ -263,35 +267,35 @@ class Board(QDialog, Ui_tic_tac_toe_board):
         # Check diagonals and return True or False
         return self.check_diagonals()
 
-    def check_rows(self, board):
+    def check_rows(self, board, optional={"-"}):
         # Iterates through board and if
         for row in board:
             # Check if exists only one shape(X or O) in row and symbol can't be "-".
             # Symbol "-" represents empty cell in the board of the game.
-            if len(set(row)) == 1 and set(row) != {"-"}:
+            if len(set(row)) == 1 and set(row) != optional:
                 return True
         return False
 
-    def check_diagonals(self):
+    def check_diagonals(self, optional={"-"}):
         # Check diagonal ((0,0), (1,1), (2,2)....etc)
         check_one = set([self.push_list[i][i] for i in range(len(self.push_list))])
         # Check if exists only one shape(X or O) in first diagonal and symbol there can't be "-".
         # Symbol "-" represents empty cell in the board of the game.
-        if len(check_one) == 1 and check_one != {"-"}:
+        if len(check_one) == 1 and check_one != optional:
             return True
         # check diagonal (from last column in first row to last row and first column)
         check_two = set([self.push_list[i][len(self.push_list) - i - 1] for i in range(len(self.push_list))])
         # Check if exists only one shape(X or O) in second diagonal and symbol there can't be "-".
         # Symbol "-" represents empty cell in the board of the game.
-        if len(check_two) == 1 and check_two != {"-"}:
+        if len(check_two) == 1 and check_two != optional:
             return True
         return False
 
-    def is_draw(self):
+    def is_draw(self, optional="-"):
         """Checks existing empty cells. If not, then return True and finish game."""
         for row in range(len(self.push_list)):
             for column in range(len(self.push_list[row])):
-                if self.push_list[row][column] == "-":
+                if self.push_list[row][column] == optional:
                     return False
         return True
 
@@ -311,8 +315,8 @@ class Board(QDialog, Ui_tic_tac_toe_board):
             self.intermediate_level()
 
         elif self.player2.difficulty == "Hard":
-            self.sec = 3  # 3secs - set time for player(user) move
-            self.intermediate_level()
+            self.sec = 10  # 3secs - set time for player(user) move
+            self.hard_level()
 
     def easy_level(self):
         """
@@ -359,6 +363,60 @@ class Board(QDialog, Ui_tic_tac_toe_board):
                 else:
                     self.push_list[row][column] = "-"
         self.random_move()  # Method responsible for random moves.
+
+    def hard_level(self):
+        bestScore = -100
+        bestMove = None
+        minimax_possible_moves = self.possible_moves.copy()
+        minimax_board = self.push_list.copy()
+        for position in minimax_possible_moves:
+            row, column = int(position[0]), int(position[1])
+            minimax_board[row][column] = self.player2.shape
+            minimax_possible_moves.remove(position)
+            score = self.minimax(False, minimax_board, minimax_possible_moves, self.player1.shape)
+            minimax_board[row][column] = "-"
+            minimax_possible_moves.insert(0, position)
+            if score > bestScore:
+                bestScore = score
+                bestMove = row, column
+
+        self.push_list[bestMove[0]][bestMove[1]] = self.player2.shape
+        self.board[bestMove[0]][bestMove[1]].capture(self.player2.shape)
+        self.control_state(self.player2, bestMove[0], bestMove[1])
+        return
+
+    def minimax(self, isMaxTurn, board, minimax_possible_moves, shape):
+        if (minimax_logic.is_win(board)):
+            if shape == self.player2.shape:
+                return 1
+            else:
+                return -1
+        if (minimax_logic.is_draw(board)):
+            return 0
+
+        if isMaxTurn:
+            bestScore = -100
+            for move in minimax_possible_moves:
+                board[move[0]][move[1]] = self.player2.shape
+                minimax_possible_moves.remove(move)
+                score = self.minimax(False, board, minimax_possible_moves, self.player1.shape)
+                board[move[0]][move[1]] = "-"
+                minimax_possible_moves.insert(0, move)
+                if (score > bestScore):
+                    bestScore = score
+            return bestScore
+
+        else:
+            bestScore = 100
+            for move in minimax_possible_moves:
+                board[move[0]][move[1]] = self.player1.shape
+                minimax_possible_moves.remove(move)
+                score = self.minimax(True, board, minimax_possible_moves, self.player2.shape)
+                board[move[0]][move[1]] = "-"
+                minimax_possible_moves.insert(0, move)
+                if (score < bestScore):
+                    bestScore = score
+            return bestScore
 
     def random_move(self):
         """Makes random move by AI"""
