@@ -10,7 +10,6 @@ import minimax_logic
 from board_ui import Ui_tic_tac_toe_board
 from minimax_logic import *
 
-
 class Board(QDialog, Ui_tic_tac_toe_board):
     # The class where method creates and control all logic in the game.
 
@@ -220,7 +219,7 @@ class Board(QDialog, Ui_tic_tac_toe_board):
                 return self.player1
             if self.player2.shape == "X":
                 if self.player2.ai:
-                    self.ai_move()
+                    self.intermediate_level()
                     return
                 return self.player2
         else:  # after first movements, when previous player is known this part of code is called.
@@ -315,7 +314,7 @@ class Board(QDialog, Ui_tic_tac_toe_board):
             self.intermediate_level()
 
         elif self.player2.difficulty == "Hard":
-            self.sec = 10  # 3secs - set time for player(user) move
+            self.sec = 4  # 4secs - set time for player(user) move
             self.hard_level()
 
     def easy_level(self):
@@ -366,57 +365,36 @@ class Board(QDialog, Ui_tic_tac_toe_board):
 
     def hard_level(self):
         bestScore = -100
-        bestMove = None
+        best_move = None
         minimax_possible_moves = self.possible_moves.copy()
         minimax_board = self.push_list.copy()
-        for position in minimax_possible_moves:
-            row, column = int(position[0]), int(position[1])
-            minimax_board[row][column] = self.player2.shape
-            minimax_possible_moves.remove(position)
-            score = self.minimax(False, minimax_board, minimax_possible_moves, self.player1.shape)
-            minimax_board[row][column] = "-"
-            minimax_possible_moves.insert(0, position)
-            if score > bestScore:
-                bestScore = score
-                bestMove = row, column
 
-        self.push_list[bestMove[0]][bestMove[1]] = self.player2.shape
-        self.board[bestMove[0]][bestMove[1]].capture(self.player2.shape)
-        self.control_state(self.player2, bestMove[0], bestMove[1])
+        score, best_move = self.minimax(True, minimax_board, minimax_possible_moves, self.player1.shape)
+
+        self.push_list[best_move[0]][best_move[1]] = self.player2.shape
+        self.board[best_move[0]][best_move[1]].capture(self.player2.shape)
+        self.control_state(self.player2, best_move[0], best_move[1])
         return
 
-    def minimax(self, isMaxTurn, board, minimax_possible_moves, shape):
+
+    def minimax(self, is_max_turn, board, minimax_possible_moves, shape):
+        scores = []
         if (minimax_logic.is_win(board)):
             if shape == self.player2.shape:
-                return 1
+                return (1, None)
             else:
-                return -1
+                return (-1, None)
         if (minimax_logic.is_draw(board)):
-            return 0
+            return (0, None)
 
-        if isMaxTurn:
-            bestScore = -100
-            for move in minimax_possible_moves:
-                board[move[0]][move[1]] = self.player2.shape
-                minimax_possible_moves.remove(move)
-                score = self.minimax(False, board, minimax_possible_moves, self.player1.shape)
-                board[move[0]][move[1]] = "-"
-                minimax_possible_moves.insert(0, move)
-                if (score > bestScore):
-                    bestScore = score
-            return bestScore
-
-        else:
-            bestScore = 100
-            for move in minimax_possible_moves:
-                board[move[0]][move[1]] = self.player1.shape
-                minimax_possible_moves.remove(move)
-                score = self.minimax(True, board, minimax_possible_moves, self.player2.shape)
-                board[move[0]][move[1]] = "-"
-                minimax_possible_moves.insert(0, move)
-                if (score < bestScore):
-                    bestScore = score
-            return bestScore
+        next_shape = self.player2.shape if is_max_turn else self.player1.shape
+        for move in minimax_possible_moves[:]:
+            board[move[0]][move[1]] = next_shape
+            minimax_possible_moves.remove(move)
+            scores.append((self.minimax(not is_max_turn, board, minimax_possible_moves, next_shape)[0], move))
+            board[move[0]][move[1]] = "-"
+            minimax_possible_moves.insert(0, move)
+        return max(scores) if is_max_turn else min(scores)
 
     def random_move(self):
         """Makes random move by AI"""

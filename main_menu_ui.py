@@ -36,7 +36,7 @@ class Ui_Dialog(object):
         self.board_size = QtWidgets.QSpinBox(self.verticalLayoutWidget)
         self.board_size.setReadOnly(False)
         self.board_size.setMinimum(3)
-        self.board_size.setMaximum(8)
+        self.board_size.setMaximum(5)
         self.board_size.setObjectName("board_size")
         self.menu_upper.addWidget(self.board_size, 1, 3, 1, 1)
         self.board_size_label = QtWidgets.QLabel(self.verticalLayoutWidget)
