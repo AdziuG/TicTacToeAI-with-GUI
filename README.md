@@ -4,8 +4,8 @@ Tic Tac Toe game GUI: compete against an AI in a match of Tic Tac Toe.
 
 FEATURES:
 
-  - change size of the board. You can play on 3x3 board or 7x7 board.
-      Available options are: from 3x3 to 8x8 board. 
+  - change size of the board. You can play on 3x3 board or 5x5 board.
+      Available options are: from 3x3 to 5x5 board. 
   
   - place to input your and your opponent names
   
